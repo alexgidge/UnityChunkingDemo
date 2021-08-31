@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CameraMovementController : MonoBehaviour
+public class MovementController : MonoBehaviour
 {
     public int MoveSpeed; //10
     
