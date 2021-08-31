@@ -6,10 +6,16 @@ using Random = UnityEngine.Random;
 public class LevelGenerationController : MonoBehaviour
 {
     public static LevelGenerationController Current;
-    
-    public GameObject LevelGrid;
+    public int DestroyDistance;
 
-    public GameObject[] SectionPrefabs;
+    public Vector2 SectionSize;
+
+    public GameObject LevelGrid;
+    
+    public List<GameObject> SectionPrefabs;
+    
+    [SerializeField]
+    private List<GameObject> SectionsInPlay;
 
     private void Start()
     {
@@ -18,17 +24,38 @@ public class LevelGenerationController : MonoBehaviour
 
     private void Update()
     {
-        if()
+        if (MovementController.Current.transform.position.x > 10 && SectionsInPlay.Count < 3)
+        {
+            LoadNextSection();
+        }
     }
 
     void LoadNextSection()
     {
-        Instantiate(GetRandomSection(), LevelGrid.transform);
+        GameObject newSection = Instantiate(GetRandomSection(), LevelGrid.transform);
+        SectionsInPlay.Add(newSection); 
+        SectionCleanup();
+    }
+
+    void SectionCleanup()
+    {
+        foreach (GameObject section in SectionsInPlay)
+        {
+            if (section != null)
+            {
+                if (Vector3.Distance(section.transform.position, MovementController.Current.transform.position) >
+                    DestroyDistance)
+                {
+                    SectionsInPlay.Remove(section);
+                    Destroy(section);
+                }
+            }
+        }
     }
 
     GameObject GetRandomSection()
     {
-        int x = SectionPrefabs.Length -1;
+        int x = SectionPrefabs.Count -1;
         int rand = Random.Range(0, x);
         return SectionPrefabs[rand];
     }
