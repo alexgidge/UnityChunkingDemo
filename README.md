@@ -1,6 +1,6 @@
 # UnityChunkingDemo
 
-	Full article at https://alexgidge.com/unity-chunking/
+	[Full article at https://alexgidge.com/unity-chunking/](https://alexgidge.com/unity-chunking/)
 
 	Created by Alex Gidge 2021.
 	Demo project of some different methods for chunking sections of levels in Unity

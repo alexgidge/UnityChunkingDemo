@@ -306,9 +306,9 @@ PrefabInstance:
       propertyPath: LevelGrid
       value: 
       objectReference: {fileID: 423738203}
-    - target: {fileID: 4374958382271863472, guid: 66f21373510e9084db0dd16b0d52acd5, type: 3}
-      propertyPath: DestroyDistance
-      value: 15
+    - target: {fileID: 7978584500819175630, guid: 66f21373510e9084db0dd16b0d52acd5, type: 3}
+      propertyPath: orthographic size
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 7978584501656348400, guid: 66f21373510e9084db0dd16b0d52acd5, type: 3}
       propertyPath: m_RootOrder
