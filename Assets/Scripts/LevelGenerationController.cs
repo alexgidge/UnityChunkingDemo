@@ -54,13 +54,31 @@ public class LevelGenerationController : MonoBehaviour
 
     void LoadNextChunk(GameObject colliderParent, DirectionType direction)
     {
-        GameObject newChunk = Instantiate(GetRandomChunkPrefab(), LevelGrid.transform);
-
         Vector2 chunkLocation = GetNextChunkLocation(colliderParent, direction);
-        CacheChunk(chunkLocation, newChunk);
-        SetChunkPosition(chunkLocation, newChunk);
+        
+        if (ChunksInPlay.ContainsKey(chunkLocation))
+        {
+            if (ChunksInPlay[chunkLocation] == null)
+            {
+                GenerateChunk(chunkLocation);
+
+            }
+        }
+        else
+        {
+            GenerateChunk(chunkLocation);
+        }
+
         ChunkCleanup();
     }
+
+    private void GenerateChunk(Vector2 chunkLocation)
+    {
+        GameObject newChunk = Instantiate(GetRandomChunkPrefab(), LevelGrid.transform);
+        CacheChunk(chunkLocation, newChunk);
+        SetChunkPosition(chunkLocation, newChunk);
+    }
+
 
     private Vector2 GetNextChunkLocation(GameObject colliderParent, DirectionType direction)
     {
@@ -97,9 +115,13 @@ public class LevelGenerationController : MonoBehaviour
 
     private void CacheChunk(Vector2 gridLocation, GameObject newSection)
     {
-        if (!ChunksInPlay.ContainsValue(newSection))
+        if (!ChunksInPlay.ContainsKey(gridLocation))
         {
             ChunksInPlay.Add(gridLocation, newSection);
+        }
+        else
+        {
+            ChunksInPlay[gridLocation] = newSection;
         }
     }
 
