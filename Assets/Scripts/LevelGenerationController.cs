@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -44,22 +45,14 @@ public class LevelGenerationController : MonoBehaviour
     {
         GameObject parent = other.transform.parent.gameObject;
         //TODO: Refactor
-        switch (other.tag)
-        {
-            case NORTH_COLLIDER_TAG:
-                LoadNextChunk(parent, DirectionType.North);
-                break;
-            case EAST_COLLIDER_TAG:
-                LoadNextChunk(parent, DirectionType.East);
-                break;
-            case SOUTH_COLLIDER_TAG:
-                LoadNextChunk(parent, DirectionType.South);
-                break;
-            case WEST_COLLIDER_TAG:
-                LoadNextChunk(parent, DirectionType.West);
-                break;
-        }
+
+        DirectionType direction = GetDirectionFromTag(other.tag);
+
+        
+        LoadNextChunk(parent, direction);
     }
+
+
 
     void LoadNextChunk(GameObject colliderParent, DirectionType direction)
     {
@@ -91,29 +84,12 @@ public class LevelGenerationController : MonoBehaviour
 
     private Vector2 GetNextChunkLocation(GameObject colliderParent, DirectionType direction)
     {
-        KeyValuePair<Vector2, GameObject> currentChunkLocation = ChunksInPlay.Where(x => x.Value == colliderParent).FirstOrDefault();
-
         Vector2 chunkLocation = new Vector2();
-        
-        //TODO: Refactor
-        switch (direction)
-        {
-            case DirectionType.North:
-                chunkLocation = currentChunkLocation.Key + new Vector2(0, 1);
-                break;
-            case DirectionType.East:
-                chunkLocation = currentChunkLocation.Key + new Vector2(1,0);
-                break;
-            case DirectionType.South:
-                chunkLocation = currentChunkLocation.Key + new Vector2(0, -1);
-                break;
-            case DirectionType.West:
-                chunkLocation = currentChunkLocation.Key + new Vector2(-1,0);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
-        }
-        
+        KeyValuePair<Vector2, GameObject> currentChunkLocation =
+            ChunksInPlay.Where(x => x.Value == colliderParent).FirstOrDefault();
+        Vector2 movement = GetMovementByDirection(direction);
+        chunkLocation = currentChunkLocation.Key + movement;
+
         return chunkLocation;
     }
 
@@ -155,6 +131,41 @@ public class LevelGenerationController : MonoBehaviour
         int rand = Random.Range(0, x);
         return SectionPrefabs[rand];
     }
+    
+    private DirectionType GetDirectionFromTag(string otherTag)
+    {
+        switch (otherTag)
+        {
+            case NORTH_COLLIDER_TAG:
+                return DirectionType.North;
+            case EAST_COLLIDER_TAG:
+                return DirectionType.East;
+            case SOUTH_COLLIDER_TAG:
+                return DirectionType.South;
+            case WEST_COLLIDER_TAG:
+                return DirectionType.West;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private Vector2 GetMovementByDirection(DirectionType direction)
+    {
+        switch (direction)
+        {
+            case DirectionType.North:
+                return new Vector2(0, 1);
+            case DirectionType.East:
+                return new Vector2(1,0);
+            case DirectionType.South:
+                return new Vector2(0, -1);
+            case DirectionType.West:
+                return new Vector2(-1,0);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
+        }
+    }
+
 }
 
 enum DirectionType
