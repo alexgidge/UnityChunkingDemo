@@ -24,11 +24,20 @@ public class LevelGenerationController : MonoBehaviour
     private const string NORTH_COLLIDER_TAG = "NorthCollider";
     private const string SOUTH_COLLIDER_TAG = "SouthCollider";
 
-    private void Start()
+    private void Awake()
     {
         Current = this;
         ChunksInPlay = new Dictionary<Vector2, GameObject>();
-        //TODO: Load first block 
+    }
+
+    private void OnEnable()
+    {
+        LoadFirstChunk();
+    }
+
+    private void LoadFirstChunk()
+    {
+        GenerateChunk(new Vector2(0,0));
     }
 
     private void OnTriggerEnter2D(Collider2D other)
