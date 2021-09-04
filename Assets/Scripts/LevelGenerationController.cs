@@ -18,7 +18,7 @@ public class LevelGenerationController : MonoBehaviour
     public List<GameObject> SectionPrefabs;
     
     [SerializeField]
-    private Dictionary<Vector2, GameObject> ChunksInPlay;
+    private List<ChunkController> ChunksInPlay;
 
     private const string WEST_COLLIDER_TAG = "WestCollider";
     private const string EAST_COLLIDER_TAG = "EastCollider";
@@ -28,7 +28,7 @@ public class LevelGenerationController : MonoBehaviour
     private void Awake()
     {
         Current = this;
-        ChunksInPlay = new Dictionary<Vector2, GameObject>();
+        ChunksInPlay = new List<ChunkController>();
     }
 
     private void OnEnable()
@@ -57,10 +57,21 @@ public class LevelGenerationController : MonoBehaviour
     void LoadNextChunk(GameObject colliderParent, DirectionType direction)
     {
         Vector2 chunkLocation = GetNextChunkLocation(colliderParent, direction);
-        
-        if (ChunksInPlay.ContainsKey(chunkLocation))
+
+        ChunkController existingController = ChunksInPlay.FirstOrDefault(x => x.ChunkPosition == chunkLocation);
+
+        if (existingController == null)
+        {//Never generated
+            GenerateChunk(chunkLocation);
+        }
+        else
         {
-            if (ChunksInPlay[chunkLocation] == null)
+            
+        }
+        
+        if (ChunksInPlay.Exists(x => x.ChunkPosition == chunkLocation))
+        {
+            if (ChunksInPlay == null)
             {
                 GenerateChunk(chunkLocation);
 
@@ -77,7 +88,9 @@ public class LevelGenerationController : MonoBehaviour
     private void GenerateChunk(Vector2 chunkLocation)
     {
         GameObject newChunk = Instantiate(GetRandomChunkPrefab(), LevelGrid.transform);
-        CacheChunk(chunkLocation, newChunk);
+        ChunkController newChunkController = newChunk.GetComponent<ChunkController>();
+        newChunkController.ChunkPosition = chunkLocation;
+        CacheChunk(newChunkController);
         SetChunkPosition(chunkLocation, newChunk);
     }
 
@@ -85,11 +98,9 @@ public class LevelGenerationController : MonoBehaviour
     private Vector2 GetNextChunkLocation(GameObject colliderParent, DirectionType direction)
     {
         Vector2 chunkLocation = new Vector2();
-        KeyValuePair<Vector2, GameObject> currentChunkLocation =
-            ChunksInPlay.Where(x => x.Value == colliderParent).FirstOrDefault();
+        ChunkController currentChunk = colliderParent.GetComponent<ChunkController>();
         Vector2 movement = GetMovementByDirection(direction);
-        chunkLocation = currentChunkLocation.Key + movement;
-
+        chunkLocation = currentChunk.ChunkPosition + movement;
         return chunkLocation;
     }
 
@@ -98,30 +109,39 @@ public class LevelGenerationController : MonoBehaviour
         newSection.transform.position = new Vector3(gridLocation.x * SectionSize.x, gridLocation.y * SectionSize.y);
     }
 
-    private void CacheChunk(Vector2 gridLocation, GameObject newSection)
+    private void CacheChunk(ChunkController chunkToCache)
     {
-        if (!ChunksInPlay.ContainsKey(gridLocation))
+        if (!ChunksInPlay.Exists(x => x == chunkToCache)) //x.position == chunkController.position AND chunkController.
         {
-            ChunksInPlay.Add(gridLocation, newSection);
+            ChunksInPlay.Add(chunkToCache);
         }
         else
         {
-            ChunksInPlay[gridLocation] = newSection;
+            //TODO: Nothing? 
         }
     }
 
     void ChunkCleanup()
     {
-        foreach (KeyValuePair<Vector2, GameObject> section in ChunksInPlay)
+        foreach (ChunkController chunk in ChunksInPlay)
         {
-            if (section.Value != null)
+            try
             {
-                if (Vector3.Distance(section.Value.transform.position, MovementController.Current.transform.position) >
-                    DestroyDistance)
+                if (chunk != null)
                 {
-                    Destroy(section.Value);
+                    if (Vector3.Distance(chunk.transform.position, MovementController.Current.transform.position) >
+                        DestroyDistance)
+                    {
+                        Destroy(chunk.gameObject);
+                    }
                 }
             }
+            catch (MissingReferenceException chunkDestroyedException)
+            {
+                //todo: proper error handling
+                Debug.Log(chunkDestroyedException.ToString());
+            }
+            
         }
     }
 
@@ -166,12 +186,4 @@ public class LevelGenerationController : MonoBehaviour
         }
     }
 
-}
-
-enum DirectionType
-{
-    North = 1,
-    East = 2,
-    South = 3,
-    West = 4
 }
