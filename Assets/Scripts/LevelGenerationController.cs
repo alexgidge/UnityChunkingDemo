@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class LevelGenerationController : MonoBehaviour
@@ -11,11 +13,11 @@ public class LevelGenerationController : MonoBehaviour
     public static LevelGenerationController Current;
     public int DestroyDistance;
 
-    public Vector2 SectionSize;
+    public Vector2 ChunkSize;
 
     public GameObject LevelGrid;
     
-    public List<GameObject> SectionPrefabs;
+    public List<GameObject> ChunkPrefabs;
     
     [SerializeField]
     private List<ChunkController> ChunksInPlay;
@@ -33,51 +35,31 @@ public class LevelGenerationController : MonoBehaviour
 
     private void OnEnable()
     {
-        LoadFirstChunk();
+        StartCoroutine("LoadFirstChunk");
     }
 
-    private void LoadFirstChunk()
+    private IEnumerator LoadFirstChunk()
     {
+        yield return new WaitForSeconds(1);
         GenerateChunk(new Vector2(0,0));
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         GameObject parent = other.transform.parent.gameObject;
-        //TODO: Refactor
+        ChunkController currentChunk = parent.GetComponent<ChunkController>();
 
         DirectionType direction = GetDirectionFromTag(other.tag);
-
         
-        LoadNextChunk(parent, direction);
+        LoadNextChunk(currentChunk, direction);
     }
 
-
-
-    void LoadNextChunk(GameObject colliderParent, DirectionType direction)
+    void LoadNextChunk(ChunkController currentChunk, DirectionType direction)
     {
-        Vector2 chunkLocation = GetNextChunkLocation(colliderParent, direction);
-
-        ChunkController existingController = ChunksInPlay.FirstOrDefault(x => x.ChunkPosition == chunkLocation);
-
-        if (existingController == null)
-        {//Never generated
-            GenerateChunk(chunkLocation);
-        }
-        else
-        {
-            
-        }
+        Vector2 movement = GetMovementByDirection(direction);
+        Vector2 chunkLocation = currentChunk.ChunkPosition + movement;
         
-        if (ChunksInPlay.Exists(x => x.ChunkPosition == chunkLocation))
-        {
-            if (ChunksInPlay == null)
-            {
-                GenerateChunk(chunkLocation);
-
-            }
-        }
-        else
+        if (!ChunksInPlay.Exists(x => x.ChunkPosition == chunkLocation))
         {
             GenerateChunk(chunkLocation);
         }
@@ -93,20 +75,10 @@ public class LevelGenerationController : MonoBehaviour
         CacheChunk(newChunkController);
         SetChunkPosition(chunkLocation, newChunk);
     }
-
-
-    private Vector2 GetNextChunkLocation(GameObject colliderParent, DirectionType direction)
+    
+    private void SetChunkPosition(Vector2 gridLocation, GameObject newChunk)
     {
-        Vector2 chunkLocation = new Vector2();
-        ChunkController currentChunk = colliderParent.GetComponent<ChunkController>();
-        Vector2 movement = GetMovementByDirection(direction);
-        chunkLocation = currentChunk.ChunkPosition + movement;
-        return chunkLocation;
-    }
-
-    private void SetChunkPosition(Vector2 gridLocation, GameObject newSection)
-    {
-        newSection.transform.position = new Vector3(gridLocation.x * SectionSize.x, gridLocation.y * SectionSize.y);
+        newChunk.transform.position = new Vector3(gridLocation.x * ChunkSize.x, gridLocation.y * ChunkSize.y);
     }
 
     private void CacheChunk(ChunkController chunkToCache)
@@ -114,10 +86,6 @@ public class LevelGenerationController : MonoBehaviour
         if (!ChunksInPlay.Exists(x => x == chunkToCache)) //x.position == chunkController.position AND chunkController.
         {
             ChunksInPlay.Add(chunkToCache);
-        }
-        else
-        {
-            //TODO: Nothing? 
         }
     }
 
@@ -147,9 +115,9 @@ public class LevelGenerationController : MonoBehaviour
 
     GameObject GetRandomChunkPrefab()
     {
-        int x = SectionPrefabs.Count -1;
+        int x = ChunkPrefabs.Count -1;
         int rand = Random.Range(0, x);
-        return SectionPrefabs[rand];
+        return ChunkPrefabs[rand];
     }
     
     private DirectionType GetDirectionFromTag(string otherTag)
